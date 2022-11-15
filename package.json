@@ -1,0 +1,20 @@
+{
+  "name": "multi-dir-shell",
+  "version": "1.0.1",
+  "description": "Exec shell and git instruction in multi git project dir.",
+  "main": "index.js",
+  "bin": {
+    "bgit": "index.js",
+    "bbb": "works.js"
+  },
+  "keywords": [
+    "git",
+    "multi",
+    "shell"
+  ],
+  "author": "LinQuan",
+  "license": "MIT",
+  "dependencies": {
+    "for-more": "^1.0.1"
+  }
+}
