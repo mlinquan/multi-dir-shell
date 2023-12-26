@@ -46,7 +46,7 @@ const WORKER_NUM = dirList.length; // 线程数
 let Completed = 0;
 
 function doWork(subDir, args, index, startTime) {
-  console.log(subDir, args, index, startTime);
+  // console.log(subDir, args, index, startTime);
   return execSync(args.join(' '), {
     cwd: subDir
   })

@@ -35,7 +35,7 @@ const gitRepositories = fs.readdirSync(baseDir).filter((dir) => {
 })
 
 const argv = process.argv.slice(2)
-console.log(process.argv)
+// console.log(process.argv)
 
 if (gitRepositories.length) {
     gitRepositories.forMore(1, async (rep) => {
