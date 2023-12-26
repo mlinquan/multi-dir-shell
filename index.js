@@ -3,12 +3,9 @@
 const fs = require('fs')
 const path = require('path')
 const baseDir = process.cwd()
-const util = require('util')
-const child_process = require('child_process')
-const exec = util.promisify(require('child_process').exec)
-const spawn = child_process.spawn
+const { exec } = require('child_process')
 
-const forMore = require('for-more')
+require('for-more')
 
 const execSync = function(command, options) {
 	options = {...options}

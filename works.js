@@ -10,7 +10,7 @@ const {
 const fs = require('fs');
 const path = require('path')
 const baseDir = process.cwd()
-const { spawn } = require('child_process')
+const { exec } = require('child_process')
 
 const argv = require('./argv.js')
 const args = process.argv.slice(2)
