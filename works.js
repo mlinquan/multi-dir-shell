@@ -28,7 +28,7 @@ const execSync = function(command, options) {
             error
         );
       }
-      resolve(stdout + "\n" + stdout);
+      resolve((stdout && stdout + "\n" || '') + (stderr || ''));
     });
   });
 };
