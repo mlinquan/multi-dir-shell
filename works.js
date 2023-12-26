@@ -15,6 +15,23 @@ const { spawn } = require('child_process')
 const argv = require('./argv.js')
 const args = process.argv.slice(2)
 
+const execSync = function(command, options) {
+  options = {...options}
+  return new Promise((resolve, reject) => {
+      exec(command, options, (error, stdout, stderr) => {
+          if (error) {
+              error.stdout = error.stdout || stdout
+              error.stderr = error.stderr || stderr
+              return reject(error)
+          }
+          resolve({
+            stdout,
+            stderr
+          })
+      })
+  })
+};
+
 const dirList = fs.readdirSync(baseDir).filter((dir) => {
   dir = path.join(baseDir, dir)
   const dirStat = fs.statSync(dir)
@@ -29,30 +46,10 @@ const WORKER_NUM = dirList.length; // 线程数
 let Completed = 0;
 
 function doWork(subDir, args, index, startTime) {
-  return new Promise((resolve, reject) => {
-    const reutrnData = {
-      stdout: '',
-      stderr: ''
-    }
-
-    const ls = spawn(args[0], args.slice(1), {
-      cwd: subDir
-    })
-
-    ls.stdout.on('data', (data) => {
-      reutrnData.stdout += data
-      // console.log(`【${rep}】：\n${data}\n----------`);
-    });
-
-    ls.stderr.on('data', (data) => {
-      reutrnData.stderr += data
-      // console.error(`【${rep}】：\n${data}\n----------`);
-    });
-
-    ls.on('close', (code) => {
-      resolve(reutrnData);
-    });
-  });
+  console.log(subDir, args, index, startTime);
+  return execSync(args.join(' '), {
+    cwd: subDir
+  })
 }
 
 if (isMainThread) {
