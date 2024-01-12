@@ -10,28 +10,10 @@ const {
 const fs = require("fs");
 const path = require("path");
 const baseDir = process.cwd();
-const { exec } = require("child_process");
 
-const argv = require("./argv.js");
 const args = process.argv.slice(2);
 
-const execSync = function(command, options) {
-  options = { ...options };
-  return new Promise((resolve, reject) => {
-    exec(command, options, (error, stdout, stderr) => {
-      if (error) {
-        error.stdout = error.stdout || stdout;
-        error.stderr = error.stderr || stderr;
-        return reject(
-          ((stdout && stdout + "\n") || "") +
-            ((stderr && stderr + "\n") || "") +
-            error
-        );
-      }
-      resolve((stdout && stdout + "\n" || '') + (stderr || ''));
-    });
-  });
-};
+const spawnSync = require('./spawnSync.js');
 
 const dirList = fs.readdirSync(baseDir).filter((dir) => {
   dir = path.join(baseDir, dir);
@@ -47,9 +29,9 @@ const WORKER_NUM = dirList.length; // 线程数
 let Completed = 0;
 
 function doWork(subDir, args, index, startTime) {
-  // console.log(subDir, args, index, startTime);
-  return execSync(args.join(" "), {
+  return spawnSync(args[0], args.slice(1), {
     cwd: subDir,
+    detached: true,
   });
 }
 
@@ -57,13 +39,19 @@ if (isMainThread) {
   createChildThread();
 } else {
   // 主线程告诉子线程可以开始工作了
-  parentPort.on("message", async ({ subDir, args, index, startTime }) => {
-    const data = await doWork(subDir, args, index, startTime);
+  parentPort.on("message", async ({ subDir, dir, args, index, startTime }) => {
+    let data = null;
+    try {
+      data = await doWork(subDir, args, index, startTime);
+    } catch (e) {
+      data = e;
+    }
     parentPort.postMessage({
       payload: "finish",
       data: {
         data,
         usedTime: Date.now() - startTime,
+        dir,
         subDir,
         args,
         index,
@@ -90,9 +78,11 @@ function createChildThread() {
   for (let x = 0; x < WORKER_NUM; x++) {
     const worker = new Worker(__filename, {});
     const subDir = path.join(baseDir, dirList[x]);
+    const dir = dirList[x]
     worker.on("message", ({ payload, data }) => {
       if (payload === "ready") {
         worker.postMessage({
+          dir,
           subDir,
           args,
           index: x,
@@ -101,20 +91,23 @@ function createChildThread() {
         });
       }
       if (payload === "finish") {
-        const { usedTime, subDir, data: aData } = data;
-        const { stdout, stderr } = aData;
-        console.log(subDir);
-        // console.log('Used time: ', usedTime);
+        const { usedTime, dir, subDir, data: aData } = data;
+        const { stdout, stderr, code, error } = aData;
+        console.log(`Workspace: ${dir}\n`)
         if (stdout) {
           console.log(stdout);
         }
         if (stderr) {
           console.error(stderr);
         }
-        console.log("===========================");
+        if (error) {
+          console.error(error);
+        }
+        console.log("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-");
         if (++Completed === WORKER_NUM) {
           console.log("Total time: ", Date.now() - startTime);
         }
+        process.exit(code);
       }
     });
   }

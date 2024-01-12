@@ -1,6 +1,6 @@
 {
   "name": "multi-dir-shell",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Exec shell and git instruction in multi git project dir.",
   "main": "index.js",
   "bin": {

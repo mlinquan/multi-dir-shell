@@ -3,27 +3,10 @@
 const fs = require("fs");
 const path = require("path");
 const baseDir = process.cwd();
-const { exec } = require("child_process");
 
 require("for-more");
 
-const execSync = function(command, options) {
-  options = { ...options };
-  return new Promise((resolve, reject) => {
-    exec(command, options, (error, stdout, stderr) => {
-      if (error) {
-        error.stdout = error.stdout || stdout;
-        error.stderr = error.stderr || stderr;
-        return reject(
-          ((stdout && stdout + "\n") || "") +
-            ((stderr && stderr + "\n") || "") +
-            error
-        );
-      }
-      resolve((stdout && stdout + "\n" || '') + (stderr || ''));
-    });
-  });
-};
+const spawnSync = require('./spawnSync.js');
 
 const gitRepositories = fs.readdirSync(baseDir).filter((dir) => {
   dir = path.join(baseDir, dir);
@@ -36,22 +19,36 @@ const gitRepositories = fs.readdirSync(baseDir).filter((dir) => {
 });
 
 const argv = process.argv.slice(2);
-// console.log(process.argv)
 
 if (gitRepositories.length) {
   gitRepositories.forMore(1, async (rep) => {
     let res = null;
     const repDir = path.join(baseDir, rep);
-    let arg = argv.join(" ");
     try {
-      res = await execSync(`git ${arg}`, {
+      res = await spawnSync('git', argv, {
         cwd: repDir,
+        detached: true,
       });
     } catch (e) {
       res = e;
     }
-    console.log(`【${rep}】：\n${res}\n----------`);
+    const { stdout, stderr, error, code } = res;
+    console.log(`Workspace: ${rep}\n`)
+    if (stdout) {
+      console.log(stdout);
+    }
+    if (stderr) {
+      console.error(stderr);
+    }
+    if (error) {
+      console.error(error);
+    }
+    if (error) {
+      console.error(error);
+    }
+    console.log("-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-");
+    if (code !== 0) {
+      process.exit(code);
+    }
   });
 }
-
-//console.log(, process.argv)
